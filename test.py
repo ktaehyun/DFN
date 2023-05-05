@@ -41,7 +41,7 @@ for root,dirs,files in os.walk(PATH):
         filenames = np.append(filenames,files)
         labels = np.append(labels,np.ones(len(files))*idx)
         idx += 1
-# print(len(labels))
+print('labels : ', labels, '\n')
 
 h,w,c = SIZE
 images = np.empty((len(filenames),h,w,c))
@@ -56,6 +56,7 @@ for i,f in enumerate(filenames):
     if idxmarley>=0:
         f = f[:idxmarley] + "marley-großman" + f[idxmarley+len("marley-großman"):]
     images[i] = sk.io.imread(f)
+# print('images : ', images, '\n')
 
 # Normalization
 images /= 255.0
@@ -67,12 +68,12 @@ nbof_classes = len(np.unique(labels))
 nbof_test = int(0.1 * nbof_classes)
 
 keep_test = np.less(labels,nbof_test)
-# print(keep_test)
+print('keep_test', keep_test, '\n')
 
 images_test = images[keep_test]
 labels_test = labels[keep_test]
-# print(images_test)
-# print(labels_test)
+print('images_test : ', images_test, '\n')
+print('labels_test : ', labels_test, '\n')
 
 NBOF_PAIRS = len(images_test)
 # Create pairs
@@ -80,10 +81,12 @@ h, w, c = SIZE
 pairs = np.empty((NBOF_PAIRS * 2, h, w, c))
 issame = np.empty(NBOF_PAIRS)
 class_test = np.unique(labels_test)
+print('class_test : ', class_test)
 for i in range(NBOF_PAIRS):
     alea = np.random.rand()
     # Pair of different dogs
     if alea < 0.5:
+        # print('------------------------------ Pair of Different dog ------------------------------')
         # Chose the classes:
         class1 = np.random.randint(len(class_test))
         class2 = np.random.randint(len(class_test))
@@ -93,16 +96,23 @@ for i in range(NBOF_PAIRS):
         # Extract images of this class:
         images_class1 = images_test[np.equal(labels_test, class1)]
         images_class2 = images_test[np.equal(labels_test, class2)]
+        # print('images_class1 : ', images_class1, '\n')
+        # print('images_class2 : ', images_class2, '\n')
 
         # Chose an image amoung these selected images
         pairs[i * 2] = images_class1[np.random.randint(len(images_class1))]
+        # print('pairs[i * 2] : ', pairs[i*2], np.shape(pairs[i*2]), '\n')
         pairs[i * 2 + 1] = images_class2[np.random.randint(len(images_class2))]
+        # print('pairs[i * 2 + 1] : ', pairs[i*2 + 1], np.shape(pairs[i*2 + 1]), '\n')
         issame[i] = 0
+        break
     # Pair of same dogs
     else:
+        # print('------------------------------ Pair of Same dog ------------------------------')
         # Chose a class
         clas = np.random.randint(len(class_test))
         images_class = images_test[np.equal(labels_test, clas)]
+        # print('images_class : ', images_class, '\n')
 
         # Select two images from this class
         idx_image1 = np.random.randint(len(images_class))
@@ -111,18 +121,26 @@ for i in range(NBOF_PAIRS):
             idx_image2 = np.random.randint(len(images_class))
 
         pairs[i * 2] = images_class[idx_image1]
+        # print('pairs[i * 2] : ', pairs[i*2], np.shape(pairs[i*2]), '\n')
         pairs[i * 2 + 1] = images_class[idx_image2]
+        # print('pairs[i * 2 + 1] : ', pairs[i*2 + 1], np.shape(pairs[i*2 + 1]), '\n')
         issame[i] = 1
+print('-------------------------------------- Pairs --------------------------------------')
+print(pairs)
+print(np.shape(pairs))
+print('-------------------------------------- Issame --------------------------------------')
+print(issame)
+print(np.shape(issame))
 
 # print(issame)
-print("-------------------------- Pairs --------------------------")
-print(pairs[0], '\n')
+# print("-------------------------- Pairs --------------------------")
+# print('pairs : ', np.shape(pairs), '\n')
+# print('pairs[0] : ', np.shape(pairs[0]), '\n')
 # print(pairs[0][0], '\n')
 # print(pairs[0][0][0], '\n')
 # print(pairs[0][0][0][0], '\n')
-print(np.shape(pairs), '\n')
-plt.imshow(pairs[0])
-plt.show()
+# plt.imshow(pairs[0])
+# plt.show()
 
 # # Test: Check the pairs
 # s = 10
@@ -137,12 +155,12 @@ plt.show()
 # plt.show()
 
 predict = model.predict(pairs)
-# Separates the pairs
-emb1 = predict[0::2]
-emb2 = predict[1::2]
 print("-------------------------- Predict --------------------------")
 print(predict)
 print(np.shape(predict))
+# Separates the pairs
+# emb1 = predict[0::2]
+# emb2 = predict[1::2]
 # print("-------------------------- emb1 --------------------------")
 # print(emb1)
 # print(np.shape(emb1))
