@@ -3,9 +3,10 @@ import tensorflow.keras.backend as K
 import numpy as np
 import skimage as sk
 import os
+import pandas as pd
 import matplotlib.pyplot as plt
-import tqdm
-from sklearn.cluster import KMeans
+# import tqdm
+# from sklearn.cluster import KMeans
 
 alpha = 0.3
 def triplet(y_true, y_pred):
@@ -26,9 +27,9 @@ def triplet_acc(y_true, y_pred):
 
     return K.less(ap + alpha, an)
 
-model = tf.keras.models.load_model('C:/Users/ksb08/PycharmProjects/DogFaceNet/output/model/2023.04.29.test/dogfacenet.test.3.h5', custom_objects={'triplet':triplet,'triplet_acc':triplet_acc})
+model = tf.keras.models.load_model('C:/Users/ktaehyun/PycharmProjects/DogFaceNet/output/model/2023.04.29.test/dogfacenet.test.3.h5', custom_objects={'triplet':triplet,'triplet_acc':triplet_acc})
 
-PATH = 'C:/Users/ksb08/PycharmProjects/DogFaceNet/data/dogfacenet/aligned/after_4_bis'
+PATH = 'C:/Users/ktaehyun/PycharmProjects/DogFaceNet/data/dogfacenet/aligned/after_4_bis'
 SIZE = (224,224,3)
 
 filenames = np.empty(0)
@@ -41,7 +42,7 @@ for root,dirs,files in os.walk(PATH):
         filenames = np.append(filenames,files)
         labels = np.append(labels,np.ones(len(files))*idx)
         idx += 1
-print('labels : ', labels, '\n')
+# print('labels : ', labels, '\n')
 
 h,w,c = SIZE
 images = np.empty((len(filenames),h,w,c))
@@ -68,12 +69,18 @@ nbof_classes = len(np.unique(labels))
 nbof_test = int(0.1 * nbof_classes)
 
 keep_test = np.less(labels,nbof_test)
-print('keep_test', keep_test, '\n')
+# print('keep_test', keep_test, '\n')
 
 images_test = images[keep_test]
 labels_test = labels[keep_test]
-print('images_test : ', images_test, '\n')
-print('labels_test : ', labels_test, '\n')
+# print('images_test : ', images_test)
+# print(np.shape(images_test), '\n')
+print('labels_test : ', labels_test)
+print(np.shape(labels_test), '\n')
+# plt.imshow(images_test[0])
+# plt.show()
+# plt.imshow(images_test[1])
+# plt.show()
 
 NBOF_PAIRS = len(images_test)
 # Create pairs
@@ -81,7 +88,8 @@ h, w, c = SIZE
 pairs = np.empty((NBOF_PAIRS * 2, h, w, c))
 issame = np.empty(NBOF_PAIRS)
 class_test = np.unique(labels_test)
-print('class_test : ', class_test)
+# print('class_test : ', class_test)
+# print(np.shape(class_test), '\n')
 for i in range(NBOF_PAIRS):
     alea = np.random.rand()
     # Pair of different dogs
@@ -105,7 +113,6 @@ for i in range(NBOF_PAIRS):
         pairs[i * 2 + 1] = images_class2[np.random.randint(len(images_class2))]
         # print('pairs[i * 2 + 1] : ', pairs[i*2 + 1], np.shape(pairs[i*2 + 1]), '\n')
         issame[i] = 0
-        break
     # Pair of same dogs
     else:
         # print('------------------------------ Pair of Same dog ------------------------------')
@@ -125,12 +132,12 @@ for i in range(NBOF_PAIRS):
         pairs[i * 2 + 1] = images_class[idx_image2]
         # print('pairs[i * 2 + 1] : ', pairs[i*2 + 1], np.shape(pairs[i*2 + 1]), '\n')
         issame[i] = 1
-print('-------------------------------------- Pairs --------------------------------------')
-print(pairs)
-print(np.shape(pairs))
-print('-------------------------------------- Issame --------------------------------------')
-print(issame)
-print(np.shape(issame))
+# print('-------------------------------------- Pairs --------------------------------------')
+# print(pairs)
+# print(np.shape(pairs), '\n')
+# print('-------------------------------------- Issame --------------------------------------')
+# print(issame)
+# print(np.shape(issame), '\n')
 
 # print(issame)
 # print("-------------------------- Pairs --------------------------")
@@ -154,10 +161,21 @@ print(np.shape(issame))
 #     plt.imshow(pairs[2*i+1]*0.5+0.5)
 # plt.show()
 
-predict = model.predict(pairs)
+predict = model.predict(images_test)
 print("-------------------------- Predict --------------------------")
 print(predict)
-print(np.shape(predict))
+print(np.shape(predict), '\n')
+
+df = pd.DataFrame(labels_test, columns=['ID'])
+length = len(predict[0])
+temp_dict = {i : [] for i in range(length)}
+for pred in predict:
+    for i, p in enumerate(pred):
+        temp_dict[i].append(p)
+for i, value_lst in enumerate(temp_dict.values()):
+    df[f'{i}_VEC'] = value_lst
+df.to_csv("test.csv", index=False)
+
 # Separates the pairs
 # emb1 = predict[0::2]
 # emb2 = predict[1::2]
